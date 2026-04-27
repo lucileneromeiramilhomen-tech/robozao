@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robozão v69</title>
+    <!-- ✅ TELEGRAM MINI APP SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        *,*::before,*::after{box-sizing:border-box;}
+        html,body{height:100%;margin:0;padding:0;overflow:hidden;}
+        body{font-family:'Inter',sans-serif;background:#0a0f1a;display:flex;flex-direction:column;font-size:12px;}
+
+        /* scrollbar */
+        ::-webkit-scrollbar{width:4px;height:4px;}
+        .excel-table thead th:hover .col-resize-handle{background:rgba(59,130,246,.4)!important;}
+        .MR.EX td{background:#0f1f38!important;}
+        .zero-row td{background:#1a0808!important;border-bottom:1px solid #7f1d1d!important;}
+        .zero-row:hover td{background:#2d0a0a!important;}
+        .zero-row .N{color:#7f1d1d!important;}
+        .gerado-row td{background:#1a1500!important;border-bottom:1px solid #854d0e!important;}
+        .gerado-row:hover td{background:#241d00!important;}
+        .gerado-row .N{color:#854d0e!important;}
+        .gerado-badge{display:inline-flex;align-items:center;gap:3px;background:#78350f;color:#fde68a;border-radius:4px;padding:1px 6px;font-size:8px;font-weight:900;white-space:nowrap;}
+        ::-webkit-scrollbar-track{background:transparent;}
+        ::-webkit-scrollbar-thumb{background:#2d3f55;border-radius:99px;}
+
+        /* ── TOOLBAR ── */
+        #toolbar{
+            background:#111827;border-bottom:1px solid #1f2d3d;
+            padding:5px 10px;display:flex;align-items:center;
+            gap:6px;flex-shrink:0;flex-wrap:wrap;min-height:46px;
+        }
+        .tb-logo{font-size:13px;font-weight:900;color:white;white-space:nowrap;letter-spacing:-.5px;line-height:1.2;}
+        .tb-logo span{color:#3b82f6;}
+        .tb-adv{font-size:8px;color:#4b5563;font-weight:700;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;}
+        .tb-sep{width:1px;height:26px;background:#1f2d3d;flex-shrink:0;}
+
+        .stat{display:flex;flex-direction:column;align-items:center;padding:2px 8px;border-radius:7px;flex-shrink:0;}
+        .stat-lbl{font-size:7px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;opacity:.8;}
+        .stat-val{font-size:13px;font-weight:900;line-height:1.1;}
+        .s-blue{background:#1d4ed8;color:white;}
+        .s-slate{background:#1f2937;color:#9ca3af;}
+        .s-green{background:#14532d;color:#86efac;}
+        .s-red{background:#7f1d1d;color:#fca5a5;}
+        .s-orange{background:#7c2d12;color:#fed7aa;}
+        .s-teal{background:#134e4a;color:#5eead4;min-width:110px;}
+        .s-yellow{background:#713f12;color:#fde68a;cursor:pointer;min-width:130px;}
+        .s-yellow:hover{background:#92400e;}
+        .soma-val{font-size:10px!important;}
+
+        .file-btn{display:flex;align-items:center;gap:4px;background:#1f2937;border:1px solid #374151;border-radius:7px;padding:3px 7px;flex-shrink:0;}
+        .file-btn label{font-size:8px;font-weight:900;text-transform:uppercase;color:#6b7280;white-space:nowrap;cursor:pointer;}
+        .file-btn input[type=file]{font-size:8px;color:#9ca3af;max-width:100px;cursor:pointer;}
+
+        .f-in{background:#1f2937;border:1px solid #374151;border-radius:7px;padding:3px 7px;font-size:10px;font-weight:700;color:#e5e7eb;outline:none;}
+        .f-in::placeholder{color:#4b5563;}
+        .f-in:focus{border-color:#3b82f6;}
+        #search-bar{width:140px;}
+        #f-val-min{width:80px;}
+        #f-age-min,#f-age-max{width:48px;text-align:center;}
+        #f-lado{width:140px;cursor:pointer;}
+
+        .btn{font-size:8.5px;font-weight:900;text-transform:uppercase;border:none;border-radius:7px;padding:4px 9px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+        .btn:active{transform:scale(.95);}
+        .btn-blue{background:#2563eb;color:white;}
+        .btn-gray{background:#1f2937;color:#6b7280;}
+        .btn-zip{background:linear-gradient(135deg,#059669,#10b981);color:white;font-size:9px;padding:5px 13px;border-radius:8px;box-shadow:0 2px 8px rgba(16,185,129,.35);}
+        .btn-zip:hover{background:linear-gradient(135deg,#047857,#059669);}
+
+        .lote-wrap{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+        .lote-wrap label{font-size:8px;font-weight:900;color:#4b5563;text-transform:uppercase;}
+        #f-qtd{width:40px;background:transparent;border:none;border-bottom:2px solid #10b981;color:#10b981;font-size:16px;font-weight:900;text-align:center;outline:none;}
+
+        /* ── TABLE ── */
+        #table-wrap{flex:1;overflow:auto;}
+        .excel-table{border-collapse:separate;border-spacing:0;width:100%;min-width:1400px;}
+        .excel-table thead th{
+            background:#0d1520;color:#6b7280;font-weight:900;text-transform:uppercase;
+            font-size:8.5px;padding:8px 10px;border-bottom:2px solid #1f2d3d;
+            border-right:1px solid #1a2332;position:sticky;top:0;z-index:20;white-space:nowrap;
+        }
+        .excel-table thead th.S{cursor:pointer;}
+        .excel-table thead th.S:hover{background:#111827;color:white;}
+        .excel-table td{
+            padding:7px 10px;border-bottom:1px solid #1a2332;border-right:1px solid #1a2332;
+            font-size:10.5px;font-weight:600;color:#94a3b8;background:#0a0f1a;
+            white-space:nowrap;transition:background .1s;
+        }
+        .excel-table tbody tr.MR{cursor:pointer;}
+        .excel-table tbody tr.MR:hover td{background:#111827;}
+        .excel-table tbody tr.MR.EX td{background:#0f1f38;}
+        .excel-table tbody tr.DR td{background:#0a0f1a;padding:0;border-right:none;white-space:normal;}
+
+        /* detail panel */
+        .DP{display:none;padding:14px 18px 18px;border-top:2px solid #2563eb;background:#060c18;}
+        .DP.open{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:18px;}
+        .DL{font-size:7.5px;font-weight:900;text-transform:uppercase;color:#374151;letter-spacing:.08em;margin-bottom:5px;}
+        .DV{font-size:10.5px;font-weight:600;color:#94a3b8;line-height:1.6;white-space:normal;}
+        .DLink{font-size:10px;color:#60a5fa;font-weight:700;text-decoration:underline;cursor:pointer;word-break:break-all;}
+        .msg-box{background:#111827;border:1px solid #1f2937;border-radius:7px;padding:8px;font-size:9.5px;color:#6b7280;line-height:1.6;white-space:pre-wrap;font-family:monospace;max-height:100px;overflow-y:auto;position:relative;}
+        .cbtn{position:absolute;top:4px;right:4px;background:#2563eb;color:white;border:none;border-radius:4px;padding:1px 6px;font-size:8px;font-weight:900;cursor:pointer;}
+
+        /* wa button */
+        .wa-btn{display:inline-flex;align-items:center;gap:4px;background:#14532d;color:#86efac;border:none;border-radius:6px;padding:2px 7px;font-size:9px;font-weight:900;cursor:pointer;text-decoration:none;white-space:nowrap;}
+        .wa-btn:hover{background:#166534;}
+        .wa-btn-sm{font-size:8px;padding:1px 5px;}
+
+        /* badges */
+        .BA{background:#14532d;color:#86efac;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:900;}
+        .BP{background:#7f1d1d;color:#fca5a5;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:900;}
+        .BI{background:#7c2d12;color:#fed7aa;padding:1px 5px;border-radius:4px;font-size:8px;font-weight:900;margin-left:3px;}
+        td.N{color:#2d3f55;font-size:9.5px;}
+        td.V{color:#34d399;font-weight:700;font-style:italic;}
+        td.T{color:#60a5fa;font-weight:700;}
+
+        /* cel column */
+        td.cel-col{font-size:9.5px;}
+
+        /* loading */
+        .LO{display:none;position:fixed;inset:0;background:rgba(2,6,23,.97);z-index:100;align-items:center;justify-content:center;flex-direction:column;}
+        .PBB{width:240px;height:5px;background:#1f2937;border-radius:99px;margin-top:12px;overflow:hidden;}
+        .PBF{height:100%;background:#3b82f6;border-radius:99px;transition:width .3s;}
+
+        /* modals */
+        .MW{display:none;position:fixed;inset:0;background:rgba(2,6,23,.85);z-index:200;align-items:center;justify-content:center;}
+        .MW.show{display:flex;}
+        .MB{background:#111827;border:1px solid #1f2937;border-radius:18px;padding:20px;width:100%;max-width:440px;margin:12px;}
+        .MT{font-size:11px;font-weight:900;color:white;text-transform:uppercase;letter-spacing:.04em;}
+        .AI{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;font-size:10.5px;font-weight:600;}
+        .A-blue{background:#1e3a5f;color:#93c5fd;}
+        .A-green{background:#14532d;color:#86efac;}
+        .A-orange{background:#7c2d12;color:#fed7aa;}
+        .A-red{background:#7f1d1d;color:#fca5a5;}
+
+        /* footer */
+        #footer{background:#020817;border-top:1px solid #1f2d3d;padding:3px 10px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+        #log-display{font-size:9px;color:#10b981;font-family:monospace;}
+        #sel-stat{font-size:8.5px;font-weight:900;color:white;background:#1d4ed8;padding:1px 9px;border-radius:99px;}
+        .assunto-item{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-radius:6px;cursor:pointer;transition:background .1s;}
+        .assunto-item:hover{background:#1f2937;}
+        .assunto-item label{font-size:10px;color:#cbd5e1;cursor:pointer;flex:1;display:flex;align-items:center;gap:6px;}
+        .assunto-count{font-size:9px;font-weight:900;background:#1f2937;color:#64748b;padding:1px 6px;border-radius:99px;white-space:nowrap;}
+        .hist-item{background:#0a0f1a;border:1px solid #1f2937;border-radius:8px;padding:8px 10px;margin-bottom:6px;}
+        .hist-item:hover{border-color:#334155;}
+        .hist-title{font-size:10px;font-weight:900;color:#e2e8f0;margin-bottom:3px;}
+        .hist-meta{font-size:9px;color:#4b5563;line-height:1.6;}
+        .hist-aviso{font-size:9px;color:#fbbf24;background:#78350f;border-radius:5px;padding:1px 6px;margin-left:6px;}
+    </style>
+</head>
+<body>
+
+<!-- ✅ TELEGRAM WEBAPP INIT -->
+<script>
+    // Inicializa o Telegram WebApp
+    const tgApp = window.Telegram?.WebApp;
+    if (tgApp) {
+        tgApp.ready();
+        tgApp.expand(); // abre em tela cheia
+        // Botão principal do Telegram (rodapé nativo)
+        tgApp.MainButton.setText("📤 Enviar ZIP pro Chat");
+        tgApp.MainButton.color = "#059669";
+        tgApp.MainButton.textColor = "#ffffff";
+        // Tema: adapta cores do app ao tema do Telegram
+        const tc = tgApp.themeParams;
+        if (tc?.bg_color) document.documentElement.style.setProperty('--tg-bg', tc.bg_color);
+    }
+
+    // Dados do usuário Telegram (quem abriu o app)
+    const tgUser = tgApp?.initDataUnsafe?.user || null;
+
+    // Função para enviar ZIP de volta pro chat do Telegram
+    async function enviarZipTelegram(zipBlob, nomeZip) {
+        if (!tgApp) return; // não está no Telegram, só baixa normal
+        try {
+            // Converte blob para base64
+            const reader = new FileReader();
+            reader.readAsDataURL(zipBlob);
+            reader.onloadend = () => {
+                const base64 = reader.result.split(',')[1];
+                // Envia dados pro bot via sendData (bot recebe no handler)
+                tgApp.sendData(JSON.stringify({
+                    tipo: "zip_gerado",
+                    nomeZip: nomeZip,
+                    tamanho: zipBlob.size,
+                    base64: base64,
+                    usuario: tgUser?.first_name || "Usuário",
+                    timestamp: new Date().toISOString()
+                }));
+                logEl(`✅ ZIP enviado pro Telegram: ${nomeZip}`);
+            };
+        } catch(e) {
+            console.error("Erro ao enviar pro Telegram:", e);
+            // Fallback: só baixa local
+        }
+    }
+
+    // Mostra badge do usuário Telegram na toolbar se disponível
+    window.addEventListener('DOMContentLoaded', () => {
+        if (tgUser) {
+            const nome = tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '');
+            const badge = document.createElement('div');
+            badge.style.cssText = 'position:fixed;top:4px;right:8px;background:#1d4ed8;color:white;font-size:8px;font-weight:900;padding:2px 8px;border-radius:99px;z-index:9999;opacity:.9';
+            badge.textContent = '🔵 ' + nome;
+            document.body.appendChild(badge);
+        }
+    });
+</script>
+
+<div id="loader" class="LO">
+    <div style="background:#111827;border:1px solid #1f2937;border-radius:20px;padding:28px;display:flex;flex-direction:column;align-items:center;width:280px">
+        <i class="fas fa-cog fa-spin" style="font-size:42px;color:#3b82f6;margin-bottom:10px"></i>
+        <h2 style="font-size:14px;font-weight:900;color:white;text-transform:uppercase;margin:0 0 3px">Gerando ZIP...</h2>
+        <p id="loader-status" style="font-size:10px;color:#4b5563;font-family:monospace;text-align:center;min-height:16px;margin:0"></p>
+        <div class="PBB"><div class="PBF" id="progress-fill" style="width:0%"></div></div>
+        <p id="progress-label" style="font-size:9px;color:#374151;font-family:monospace;margin:5px 0 0">0 / 0</p>
+    </div>
+</div>
+
+<!-- Modal Ranking -->
+<div id="ranking-modal" class="MW" onclick="if(event.target===this)toggleRanking()">
+    <div class="MB">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span class="MT">🏆 Ranking Advogados — Polo Ativo</span>
+            <button onclick="toggleRanking()" style="background:none;border:none;color:#4b5563;font-size:16px;cursor:pointer;font-weight:900">✕</button>
+        </div>
+        <div id="ranking-list" style="display:flex;flex-direction:column;gap:5px;max-height:300px;overflow-y:auto"></div>
+    </div>
+</div>
+
+<!-- Modal Alerta -->
+<div id="alert-modal" class="MW">
+    <div class="MB">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px">
+            <div style="background:#78350f;padding:7px;border-radius:9px"><i class="fas fa-triangle-exclamation" style="color:#fbbf24;font-size:16px"></i></div>
+            <div><p class="MT" style="margin:0">Confirmar Geração</p><p style="font-size:9px;color:#4b5563;margin:0;font-weight:600">Verifique antes de prosseguir</p></div>
+        </div>
+        <div id="alert-body" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px"></div>
+        <div style="display:flex;gap:8px">
+            <button onclick="closeAlert()" style="flex:1;background:#1f2937;color:#6b7280;font-size:9px;font-weight:900;text-transform:uppercase;border:none;border-radius:9px;padding:9px;cursor:pointer">Cancelar</button>
+            <button onclick="confirmGenerate()" style="flex:1;background:linear-gradient(135deg,#059669,#10b981);color:white;font-size:9px;font-weight:900;text-transform:uppercase;border:none;border-radius:9px;padding:9px;cursor:pointer">Gerar ZIP</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── TOOLBAR ── -->
+<div id="toolbar">
+    <div style="display:flex;flex-direction:column;margin-right:2px;flex-shrink:0">
+        <div class="tb-logo">🤖 Robozão <span>v69</span></div>
+        <div id="adv-principal-label" class="tb-adv">Universal Master</div>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="stat s-blue"><span class="stat-lbl">Tabela</span><span class="stat-val" id="count-visible">0</span></div>
+    <div class="stat s-slate"><span class="stat-lbl">Únicos</span><span class="stat-val" id="count-master">0</span></div>
+    <div class="stat s-green"><span class="stat-lbl">Ativo</span><span class="stat-val" id="count-ativo-total">0</span></div>
+    <div class="stat s-red"><span class="stat-lbl">Passivo</span><span class="stat-val" id="count-passivo-total">0</span></div>
+    <div class="stat s-orange"><span class="stat-lbl">Dup</span><span class="stat-val" id="count-duplicados">0</span></div>
+    <div class="stat s-teal"><span class="stat-lbl">Soma Sel.</span><span class="stat-val soma-val" id="count-soma">R$ 0</span></div>
+    <div class="stat s-yellow" onclick="toggleRanking()"><span class="stat-lbl">🏆 Adv.</span><span class="stat-val" style="font-size:8.5px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="ranking-principal">—</span></div>
+    <div class="tb-sep"></div>
+    <div class="file-btn"><label for="pdf-file">📄 PDF</label><input type="file" id="pdf-file" accept=".pdf"></div>
+    <div class="file-btn"><label for="txt-file">📋 TXT</label><input type="file" id="txt-file" accept=".txt"></div>
+    <div class="tb-sep"></div>
+    <input id="search-bar" class="f-in" type="text" placeholder="🔍 Buscar..." oninput="renderTable()">
+    <select id="f-lado" class="f-in" onchange="renderTable()">
+        <option value="TODOS">Todos os Polos</option>
+        <option value="ATIVO">Só Polo Ativo</option>
+        <option value="PASSIVO">Só Polo Passivo</option>
+    </select>
+    <input id="f-val-min" class="f-in" type="number" placeholder="R$ Mín" oninput="renderTable()">
+    <input id="f-age-min" class="f-in" type="number" placeholder="Id↑" oninput="renderTable()">
+    <input id="f-age-max" class="f-in" type="number" placeholder="Id↓" oninput="renderTable()">
+    <div class="tb-sep"></div>
+    <button class="btn btn-blue" onclick="toggleAll(true)">✓ Sel. Tudo</button>
+    <button class="btn btn-gray" onclick="toggleAll(false)">✕ Limpar</button>
+    <div class="tb-sep"></div>
+    <div class="lote-wrap"><label>Lote</label><input type="number" id="f-qtd" value="35"></div>
+    <button class="btn btn-zip" onclick="askBeforeGenerate()"><i class="fas fa-file-zipper"></i> Gerar Master ZIP</button>
+    <div class="tb-sep"></div>
+    <button class="btn btn-gray" onclick="toggleAssuntoPanel()" id="btn-assunto" title="Filtrar por assunto">📋 Assunto <span id="assunto-badge" style="display:none;background:#3b82f6;color:white;border-radius:99px;padding:0 5px;font-size:8px;margin-left:3px">0</span></button>
+    <button class="btn btn-gray" onclick="toggleHistorico()" title="Histórico de lotes">🕓 Histórico</button>
+</div>
+
+<!-- PAINEL ASSUNTO -->
+<div id="assunto-panel" style="display:none;position:fixed;top:52px;right:12px;z-index:500;background:#111827;border:1px solid #334155;border-radius:12px;padding:12px;min-width:280px;max-height:400px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.6)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em">Filtrar por Assunto</span>
+        <div style="display:flex;gap:5px">
+            <button onclick="selecionarTodosAssuntos(true)" style="font-size:8px;background:#1f2937;color:#6b7280;border:none;border-radius:5px;padding:2px 6px;cursor:pointer">Todos</button>
+            <button onclick="selecionarTodosAssuntos(false)" style="font-size:8px;background:#1f2937;color:#6b7280;border:none;border-radius:5px;padding:2px 6px;cursor:pointer">Nenhum</button>
+            <button onclick="toggleAssuntoPanel()" style="font-size:10px;background:none;border:none;color:#4b5563;cursor:pointer;font-weight:900">✕</button>
+        </div>
+    </div>
+    <div id="assunto-list" style="display:flex;flex-direction:column;gap:4px"></div>
+</div>
+
+<!-- PAINEL HISTÓRICO -->
+<div id="historico-panel" style="display:none;position:fixed;top:52px;right:12px;z-index:500;background:#111827;border:1px solid #334155;border-radius:12px;padding:14px;min-width:360px;max-height:480px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.6)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em">🕓 Histórico de Lotes</span>
+        <div style="display:flex;gap:5px">
+            <button onclick="limparHistorico()" style="font-size:8px;background:#7f1d1d;color:#fca5a5;border:none;border-radius:5px;padding:2px 6px;cursor:pointer">Limpar tudo</button>
+            <button onclick="toggleHistorico()" style="font-size:10px;background:none;border:none;color:#4b5563;cursor:pointer;font-weight:900">✕</button>
+        </div>
+    </div>
+    <div id="historico-list"></div>
+</div>
+
+<!-- ── TABLE ── -->
+<div id="table-wrap">
+    <table class="excel-table" id="main-table">
+        <thead>
+            <tr>
+                <th style="width:32px" class="text-center">#</th>
+                <th style="width:32px" class="text-center">Sel</th>
+                <th style="width:66px" class="text-center">Lado</th>
+                <th style="width:100px" class="S" onclick="sortTable('valFloat')">Valor R$ <span style="opacity:.4;font-size:7px">▲▼</span></th>
+                <th style="width:110px" class="S" onclick="sortTable('tramitDays')">Tramitação <span style="opacity:.4;font-size:7px">▲▼</span></th>
+                <th style="width:76px" class="S text-center" onclick="sortTable('idade')">Idade <span style="opacity:.4;font-size:7px">▲▼</span></th>
+                <th style="width:200px" class="S" onclick="sortTable('credor')">Credor Principal <span style="opacity:.4;font-size:7px">▲▼</span></th>
+                <th style="width:165px">Processo</th>
+                <th style="width:90px" class="text-center">📱 Cel 1</th>
+                <th style="width:90px" class="text-center">📱 Cel 2</th>
+                <th style="width:90px" class="text-center">📱 Cel 3</th>
+                <th style="width:50px" class="text-center">WhatsApp</th>
+                <th>Advogado</th>
+                <th style="width:28px" class="text-center">▼</th>
+            </tr>
+        </thead>
+        <tbody id="table-body">
+            <tr><td colspan="14" style="text-align:center;padding:70px;color:#1f2937;font-weight:900;text-transform:uppercase;letter-spacing:.2em;font-size:11px">Aguardando arquivo Master .txt...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ── FOOTER ── -->
+<div id="footer">
+    <div id="log-display">> ROBOZÃO v58 — CEL · WA LINK · UNISSEX · SEM DIAS</div>
+    <div id="sel-stat">SEL: 0</div>
+</div>
+
+<script>
+    let globalData = [];
+    let originalHistory = [];
+    let initialTotalGlobal = 0;
+    let lawyerHeaderOAB = "";
+    let lawyerMasterName = "";
+    let pdfRaw = null;
+    let sortKey = 'valFloat';
+    let sortAsc = false;
+    let duplicadosCount = 0;
+    let pendingGenerate = false;
+    let assuntosFiltro = new Set(); // assuntos selecionados (vazio = todos)
+    let assuntosDisponiveis = {}; // {assunto: contagem}
+    const logEl = (msg) => { document.getElementById('log-display').innerText = `> ${msg.toUpperCase()}`; };
+
+    // ── IndexedDB PDF ───────────────────────────────────────────────────
+    const dbReq = indexedDB.open("RobozaoDB", 1);
+    dbReq.onupgradeneeded = (e) => { e.target.result.createObjectStore("pdfStore"); };
+    dbReq.onsuccess = (e) => {
+        e.target.result.transaction("pdfStore","readonly").objectStore("pdfStore").get("modelPdf").onsuccess = (ev) => {
+            if (ev.target.result) { pdfRaw = ev.target.result; logEl("PDF modelo em memória."); }
+        };
+    };
+    document.getElementById('pdf-file').addEventListener('change', async (e) => {
+        pdfRaw = await e.target.files[0].arrayBuffer();
+        dbReq.result.transaction("pdfStore","readwrite").objectStore("pdfStore").put(pdfRaw,"modelPdf");
+        logEl("Novo PDF salvo permanentemente.");
+    });
+
+    // ── EXTENSO ─────────────────────────────────────────────────────────
+    function converterExtenso(valorStr) {
+        try {
+            const v = parseFloat(valorStr.replace(/R\$\s*/,'').replace(/\./g,'').replace(',','.').trim());
+            if (isNaN(v) || v === 0) return "(Zero reais).\nSerá Depositado em Conta Corrente de Sua Titularidade.";
+            const ext = porExtenso(Math.floor(v), 'real', 'reais');
+            const c = Math.round((v - Math.floor(v)) * 100);
+            return `(${ext.charAt(0).toUpperCase()+ext.slice(1)}${c>0?' e '+porExtenso(c,'centavo','centavos'):''}).\nSerá Depositado em Conta Corrente de Sua Titularidade.`;
+        } catch(e) { return ""; }
+    }
+    function porExtenso(n, sg, pl) {
+        if (n === 0) return `zero ${pl}`;
+        const u=['','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove'];
+        const d=['','','vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa'];
+        const c=['','cem','duzentos','trezentos','quatrocentos','quinhentos','seiscentos','setecentos','oitocentos','novecentos'];
+        function g(x){ if(!x)return ''; let p=''; if(x===100)return'cem'; if(x>=100){p=c[Math.floor(x/100)];x%=100;if(x)p+=' e ';} if(x>=20){p+=d[Math.floor(x/10)];x%=10;if(x)p+=' e ';} if(x>0)p+=u[x]; return p; }
+        const mi=Math.floor(n/1000000),mil=Math.floor((n%1000000)/1000),res=n%1000;
+        const pts=[];
+        if(mi)pts.push(g(mi)+(mi===1?' milhão':' milhões'));
+        if(mil)pts.push(g(mil)+' mil');
+        if(res)pts.push(g(res));
+        return `${pts.join(' e ')} ${n===1?sg:pl}`;
+    }
+
+    // ── RANKING ─────────────────────────────────────────────────────────
+    function calcularRankingDeLista(lista) {
+        const cnt = {};
+        lista.forEach(p => {
+            if (p.lado !== "ATIVO") return;
+            (p.raw_name||"").split(/;|,/).forEach(a => {
+                let nome = a.replace(/Advogado[:\s]*/gi,'').replace(/\(CPF:.*?\)/gi,'').replace(/OAB.*$/i,'').replace(/-/g,'').trim();
+                if (nome.length > 2) cnt[nome] = (cnt[nome]||0)+1;
+            });
+        });
+        return Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+    }
+    function renderRanking() {
+        const ranking = calcularRankingDeLista(globalData);
+        const el = document.getElementById('ranking-principal');
+        if (ranking.length > 0) { const [n,q]=ranking[0]; el.textContent=n.substring(0,26)+(n.length>26?'…':'')+` (${q}x)`; }
+        else el.textContent='—';
+        const lista = document.getElementById('ranking-list');
+        lista.innerHTML = ranking.length===0 ? '<p class="text-slate-400 text-xs text-center py-4">Nenhum advogado identificado.</p>'
+            : ranking.map(([nome,qtd],i) => `
+            <div class="flex items-center justify-between p-3 rounded-xl ${i===0?'bg-yellow-50 border border-yellow-200':'bg-slate-50 border border-slate-100'}">
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-black ${i===0?'text-yellow-600':'text-slate-400'} w-6 text-center">${i===0?'🥇':'#'+(i+1)}</span>
+                    <span class="text-xs font-black text-slate-700 uppercase">${nome}</span>
+                    ${i===0?'<span class="text-[8px] bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full font-black">PRINCIPAL</span>':''}
+                </div>
+                <span class="text-xs font-black ${i===0?'text-yellow-700':'text-slate-500'}">${qtd} proc.</span>
+            </div>`).join('');
+    }
+    function toggleRanking() {
+        const m = document.getElementById('ranking-modal');
+        const vis = m.style.display==='flex';
+        m.style.display = vis?'none':'flex';
+        if(!vis) renderRanking();
+    }
+
+    // ── PARSER UNIVERSAL ────────────────────────────────────────────────
+    document.getElementById('txt-file').addEventListener('change', async (e) => {
+        const text = await e.target.files[0].text();
+        const oabMatch = text.match(/ADVOGADO:\s*([^\n\r]*)/i);
+        lawyerHeaderOAB = oabMatch ? oabMatch[1].split('(')[0].replace(/;.*/,'').trim() : "OAB";
+        const oabNumMatch = text.match(/OAB[:\s\/]+(\w[\w\d\-\/]*)/i);
+        const oabNum = oabNumMatch ? oabNumMatch[1].trim() : lawyerHeaderOAB;
+        const totalMatch = text.match(/Total de Processos INICIAL:\s*(\d+)/i);
+        initialTotalGlobal = totalMatch ? parseInt(totalMatch[1]) : 0;
+        originalHistory = text.match(/(⚠PROCESSOS  RETIRADO DESSE ARQUIVO:.*)/gi)||[];
+        const sections = text.split(/(?:📜={2,}[^📜\n]*PROCESSO|^PROCESSO:)/im);
+        globalData = []; duplicadosCount = 0;
+        const seenProcs = new Set();
+
+        for (let i=1; i<sections.length; i++) {
+            const zonaAtiva = sections[i].split(/POLO PASSIVO:/i)[0]||"";
+            const m = zonaAtiva.match(/(?:🎓\s*)?ADVOGADO:\s*([^(\n\r;]*)/i);
+            if (m) { lawyerMasterName = m[1].replace(/-/g,"").trim().toUpperCase(); break; }
+        }
+        document.getElementById('adv-principal-label').innerText = `TITULAR: ${lawyerMasterName}`;
+
+        function extrairAdvs(zona) {
+            const nomes=[];
+            [...zona.matchAll(/(?:🎓\s*)?ADVOGADO:\s*([^\n\r]*)/gi)].forEach(m=>{
+                m[1].split(/;/).forEach(a=>{
+                    let nome=a.replace(/Advogado[:\s]*/gi,'').replace(/\(CPF:.*?\)/gi,'').replace(/-/g,'').trim();
+                    if(nome.length>2) nomes.push(nome.toUpperCase());
+                });
+            });
+            return nomes;
+        }
+
+        sections.slice(1).forEach((bloco) => {
+            if (bloco.trim().length < 50) return;
+            const nProc = (bloco.match(/(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})/)||["",""])[1];
+            if (!nProc) return;
+            if (seenProcs.has(nProc)) { duplicadosCount++; return; }
+            seenProcs.add(nProc);
+            const partes = bloco.split(/POLO PASSIVO:/i);
+            const tAtivo=partes[0]||"", tPassivo=partes[1]||"";
+            const advsAtivo=extrairAdvs(tAtivo), advsPassivo=extrairAdvs(tPassivo);
+            const noAtivo=advsAtivo.some(a=>a.includes(lawyerMasterName)||lawyerMasterName.includes(a));
+            const noPassivo=advsPassivo.some(a=>a.includes(lawyerMasterName)||lawyerMasterName.includes(a));
+            const lado=noAtivo?"ATIVO":noPassivo?"PASSIVO":(advsAtivo.length>0?"ATIVO":"PASSIVO");
+            const advsDoLado=lado==="ATIVO"?advsAtivo:advsPassivo;
+            const nAdv=advsDoLado.length>0?advsDoLado[0].charAt(0)+advsDoLado[0].slice(1).toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()):lawyerMasterName;
+            const valS=(bloco.match(/(?:7:💰\s*Valor:|VALOR:)\s*R\$\s*([\d.,]+)/i)||["","0,00"])[1].trim();
+            const valF=parseFloat(valS.replace(/\./g,'').replace(',','.'))||0;
+            const idadeM=bloco.match(/17:🎂\s*IDADE:\s*(\d+)/)||tAtivo.match(/-\s*IDADE:\s*(\d+)/)||bloco.match(/IDADE:\s*(\d+)/i);
+            const idade=idadeM?parseInt(idadeM[1]):0;
+            const nomeM=tAtivo.match(/15:👤\s*NOME:\s*([^\n\r(]*)/)||tAtivo.match(/-\s*NOME:\s*([^\n\r(]*)/);
+            const credor=nomeM?nomeM[1].trim():"N/A";
+            const docM=tAtivo.match(/16:🆔\s*DOC:\s*([\d.\-\/]+)/)||tAtivo.match(/-\s*DOC:\s*([\d.\-\/]+)/);
+            const cpf=docM?docM[1].trim():"";
+            const contraM=tPassivo.match(/-?\s*NOME:\s*([^\n\r]*)/);
+            const contra=contraM?contraM[1].replace(/^-\s*/,'').trim():"N/A";
+            const contraDocM=tPassivo.match(/-?\s*DOC:\s*([\d.\-\/]+)/);
+            const contraDoc=contraDocM?contraDocM[1].trim():"";
+            const trib=(bloco.match(/(?:9:🏛️\s*TRIBUNAL:|TRIBUNAL:)\s*([^\n\r]*)/i)||["",""])[1].trim();
+            const vara=(bloco.match(/(?:ORGAO|ÓRGÃO)\s*JULGADOR:\s*([^\n\r]*)/i)||["",""])[1].trim();
+            const assunto=(bloco.match(/(?:8:⚠️\s*ASSUNTO:|ASSUNTO:)\s*([^\n\r]*)/i)||["",""])[1].trim();
+            const classe=(bloco.match(/(?:11:\s*CLASSE:|CLASSE:)\s*([^\n\r]*)/i)||["",""])[1].trim();
+            const link=(bloco.match(/(?:3:🔗LINK:|LINK:)\s*([^\s\n\r]*)/i)||["",""])[1].trim();
+            const dataMov=(bloco.match(/(?:13:🕒\s*DATA ULTIMO MOVIMENTO:|DATA ULTIMO MOVIMENTO:)\s*([^\n\r]*)/i)||["",""])[1].trim();
+            const dataM2=bloco.match(/(?:12:📅\s*DATA INICIO:|DATA INICIO:)\s*([\d\/]+)/i);
+            const dataIni=dataM2?dataM2[1].trim():"";
+            let tText="N/A",tDays=0;
+            if(dataIni){const p2=dataIni.split('/');if(p2.length===3){const dt=new Date(p2[2],p2[1]-1,p2[0]);tDays=Math.floor((new Date()-dt)/86400000);const y=Math.floor(tDays/365),mo=Math.floor((tDays%365)/30),d2=(tDays%365)%30;const pts=[];if(y>0)pts.push(`${y} ano${y>1?'s':''}`);if(mo>0)pts.push(`${mo} mês${mo>1?'es':''}`);if(d2>0)pts.push(`${d2} dia${d2>1?'s':''}`);tText=pts.join(" e ")||`${tDays} dias`;}}
+            const telsRaw=[...bloco.matchAll(/\((\d+)\)\s*([\d\-]+)/g)];
+            const fixos=[],cels=[];
+            telsRaw.forEach(m2=>{const nl=m2[2].replace(/\D/g,'');const en=`(${m2[1]}) ${m2[2]}`;if(nl.length>=9)cels.push(en);else fixos.push(en);});
+            const telParts=[];
+            if(cels.length) telParts.push("📱 CEL: "+cels.join(" | "));
+            if(fixos.length) telParts.push("☎ FIXO: "+fixos.join(" | "));
+            const tels=telParts.join("  ")||"Não informado";
+            const celsArr = cels; // TODOS os celulares
+            const valorExtenso=converterExtenso(valS);
+            const primeiroNome=credor.split(' ')[0];
+            const tTextSemDias = tText.replace(/ e \d+ dia[s]?$/,""); const msg1=`Olá, ${primeiroNome}!\n\nGostaria de informar sobre o andamento do processo contra ${contra}.\nDepois de ${tTextSemDias} de andamento, a sentença saiu — totalmente favorável a você.\nAssim que eu tiver um tempinho te explico melhor, mas pode comemorar.`;
+            const msg2=`A Justiça reconheceu seu direito e fixou a indenização em R$ ${valS}.\nO processo foi encaminhado para fase de execução (PDF em anexo).\nPreciso que confirme seus dados bancários atualizados para dar início ao cumprimento de sentença.`;
+            const msg3=`Recebi certinho, obrigado por enviar rápido.\nO setor financeiro vai entrar em contato nas próximas horas para confirmar tudo e liberar o valor.\nQualquer novidade, te aviso por aqui.`;
+            globalData.push({n_processo:nProc,credor,valS,valFloat:valF,idade,tramitText:tText,tramitDays:tDays,tribunal:trib,vara,contra,contraDoc,advogado:`${nAdv} | OAB: ${lawyerHeaderOAB}`,selecionado:true,data_inicio:dataIni,lado,raw_name:nAdv,cpf,tels,assunto,classe,link,dataMov,valorExtenso,oabNum,msg1,msg2,msg3,celsArr});
+        });
+
+        document.getElementById('count-master').innerText=globalData.length;
+        document.getElementById('count-duplicados').innerText=duplicadosCount;
+        document.getElementById('count-ativo-total').innerText=globalData.filter(x=>x.lado==="ATIVO").length;
+        document.getElementById('count-passivo-total').innerText=globalData.filter(x=>x.lado==="PASSIVO").length;
+        renderTable(); renderRanking(); buildAssuntos();
+        logEl(`Master processado — ${globalData.length} processos únicos.`);
+    });
+
+    // ── RENDER TABLE ────────────────────────────────────────────────────
+    function renderTable() {
+        const body = document.getElementById('table-body');
+        const vMin = parseFloat(document.getElementById('f-val-min').value)||0;
+        const iMin = parseInt(document.getElementById('f-age-min').value)||0;
+        const iMax = parseInt(document.getElementById('f-age-max').value)||999;
+        const ladoF = document.getElementById('f-lado').value;
+        const busca = (document.getElementById('search-bar').value||"").toLowerCase().trim();
+
+        let f = globalData.filter(p =>
+            (p.valFloat>=vMin) && (p.idade>=iMin) && (p.idade<=iMax) &&
+            (ladoF==="TODOS"||p.lado===ladoF) &&
+            (!busca || p.credor.toLowerCase().includes(busca) || p.n_processo.toLowerCase().includes(busca) || p.contra.toLowerCase().includes(busca)) &&
+            (assuntosFiltro.size===0 || assuntosFiltro.has(p.assunto||'Sem assunto'))
+        );
+        f.sort((a,b) => {
+            const av=a[sortKey], bv=b[sortKey];
+            if(typeof av==='string') return sortAsc?av.localeCompare(bv):bv.localeCompare(av);
+            return sortAsc?av-bv:bv-av;
+        });
+
+        document.getElementById('count-visible').innerText=f.length;
+        const sel=f.filter(x=>x.selecionado);
+        document.getElementById('sel-stat').innerText=`SEL: ${sel.length}`;
+        const soma=sel.reduce((s,p)=>s+p.valFloat,0);
+        document.getElementById('count-soma').innerText='R$ '+soma.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+        let html='';
+        f.forEach((p,i) => {
+            const idoso=p.idade>=60?'<span class="BI">&#9888; IDOSO</span>':'';
+            const rid=p.n_processo.replace(/\W/g,'');
+            const celCols=[0,1,2].map(j=>{
+                const raw=(p.celsArr||[])[j];
+                if(!raw) return '<td style="color:#1f2937;text-align:center;font-size:9px">—</td>';
+                const d=raw.replace(/\D/g,'');
+                return `<td style="font-size:9.5px;text-align:center;padding:3px 5px">
+                    <a href="https://wa.me/55${d}" target="_blank"
+                       title="Clique: abrir WhatsApp | Clique direito: copiar número"
+                       oncontextmenu="event.preventDefault();event.stopPropagation();navigator.clipboard.writeText('${d}').then(()=>{this.setAttribute('data-cp','1');this.style.background='#14532d';setTimeout(()=>{this.style.background='';},900)})"
+                       style="color:#86efac;font-weight:700;text-decoration:none;white-space:nowrap;display:inline-block;
+                              padding:2px 6px;border-radius:5px;border:1px solid #166534;transition:background .15s"
+                       onmouseover="this.style.background='#166534'" onmouseout="this.style.background=''">
+                       📱 ${raw}
+                    </a>
+                </td>`;
+            }).join('');
+            const firstCel=(p.celsArr||[])[0];
+            // Todos os cels abrem com Etapa 1 pré-colada mas SEM enviar (wa.me sem ?send=1)
+            const waCell=firstCel
+                ?`<td style="text-align:center;padding:2px">
+                    <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
+                        ${(p.celsArr||[]).slice(0,3).map(cel=>{
+                            const d=cel.replace(/\D/g,'');
+                            const txt=encodeURIComponent(p.msg1);
+                            return '<a href="https://wa.me/55'+d+'?text='+txt+'" target="_blank" title="'+cel+' — Etapa 1 pré-colada" class="wa-btn wa-btn-sm" style="font-size:7.5px;padding:1px 4px">📲 '+cel+'</a>';
+                        }).join('')}
+                    </div>
+                </td>`
+                :'<td style="color:#1f2937;text-align:center;font-size:9px">—</td>';
+            const isZero = p.valFloat === 0;
+            const loteAnterior = processoJaGerado(p.n_processo);
+            const jaGerado = !!loteAnterior;
+            let rowClass = 'MR';
+            if (isZero) rowClass += ' zero-row';
+            else if (jaGerado) rowClass += ' gerado-row';
+            html+=`<tr class="${rowClass}" id="row-${rid}" onclick="toggleDetail('${rid}')">
+                <td class="N" style="text-align:center">#${i+1}</td>
+                <td style="text-align:center" onclick="event.stopPropagation()"><input type="checkbox" ${p.selecionado?'checked':''} onchange="updateRow('${p.n_processo}',this.checked)" style="width:14px;height:14px;cursor:pointer;accent-color:#3b82f6"></td>
+                <td style="text-align:center"><span class="${p.lado==='ATIVO'?'BA':'BP'}">${p.lado}</span></td>
+                <td class="V" style="${isZero?'color:#ef4444!important;background:#2d0a0a!important':''}">${isZero?'⚠ R$ 0,00':'R$ '+p.valS}</td>
+                <td class="T">${p.tramitText}</td>
+                <td style="text-align:center;color:#94a3b8;white-space:nowrap">${p.idade}a${idoso}</td>
+                <td style="max-width:190px;overflow:hidden;text-overflow:ellipsis">
+                    <span style="color:${jaGerado?'#92400e':'#e2e8f0'};font-weight:700">${p.credor}</span>
+                    ${jaGerado?`<span class="gerado-badge" title="Gerado em ${loteAnterior.data}">✓ JÁ GERADO</span>`:''}
+                </td>
+                <td style="font-family:monospace;font-size:9px;color:#475569;white-space:nowrap">${p.n_processo}</td>
+                ${celCols}${waCell}
+                <td style="font-size:9px;color:#374151;max-width:160px;overflow:hidden;text-overflow:ellipsis">${p.advogado}</td>
+                <td style="text-align:center;color:#2d3f55;font-size:9px;cursor:pointer" id="arrow-${rid}">&#9660;</td>
+            </tr>
+            <tr class="DR" id="detail-${rid}">
+                <td colspan="14" style="padding:0;border-right:none">
+                    <div class="DP" id="panel-${rid}">
+                        <div>
+                            <div class="DL">&#128203; Processo</div>
+                            <div class="DV">
+                                <b>N&#xBA;:</b> ${p.n_processo}<br>
+                                <b>Valor:</b> <span style="color:#34d399">R$ ${p.valS}</span><br>
+                                <b>Assunto:</b> ${p.assunto||'—'}<br>
+                                <b>Classe:</b> ${p.classe||'—'}<br>
+                                <b>In&#xED;cio:</b> ${p.data_inicio||'—'}<br>
+                                <b>&#218;lt.Mov.:</b> ${p.dataMov||'—'}<br>
+                                <b>Tribunal:</b> <span style="white-space:normal">${p.tribunal||'—'}</span><br>
+                                <b>Vara:</b> <span style="white-space:normal">${p.vara||'—'}</span><br>
+                                ${p.link?'<a class="DLink" href="'+p.link+'" target="_blank">&#128279; Abrir processo</a>':''}
+                            </div>
+                            <div style="margin-top:10px;display:flex;flex-direction:column;gap:5px">
+                                ${jaGerado?`
+                                <div style="background:#1a1500;border:1px solid #854d0e;border-radius:8px;padding:8px 10px">
+                                    <div style="font-size:9px;font-weight:900;color:#fde68a;margin-bottom:4px">✓ Álvara já gerado</div>
+                                    <div style="font-size:9px;color:#92400e;line-height:1.6">
+                                        Lote: <b style="color:#fbbf24">${loteAnterior.nomeTxt||'—'}</b><br>
+                                        Data: <b style="color:#fbbf24">${loteAnterior.data}</b><br>
+                                        PDFs no lote: <b style="color:#fbbf24">${loteAnterior.totalPdfs}</b>
+                                    </div>
+                                    <button onclick="event.stopPropagation();gerarPdfAvulso('${rid}')"
+                                        style="margin-top:6px;display:flex;align-items:center;gap:5px;background:#292200;color:#92400e;
+                                               border:1px solid #854d0e;border-radius:6px;padding:4px 8px;font-size:8.5px;font-weight:900;cursor:pointer;
+                                               width:100%;justify-content:center;text-transform:uppercase"
+                                        onmouseover="this.style.background='#3a2e00'" onmouseout="this.style.background='#292200'">
+                                        ⚠ Gerar novamente mesmo assim
+                                    </button>
+                                </div>`
+                                :p.valFloat>0?`
+                                <button onclick="event.stopPropagation();gerarPdfAvulso('${rid}')"
+                                    style="display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:white;
+                                           border:none;border-radius:7px;padding:6px 10px;font-size:9px;font-weight:900;cursor:pointer;
+                                           text-transform:uppercase;letter-spacing:.04em;width:100%;justify-content:center"
+                                    onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                                    &#128196; Baixar Álvara deste processo
+                                </button>`:'<span style="font-size:9px;color:#4b5563">Valor zero — sem álvara</span>'}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="DL">&#128100; Polo Ativo</div>
+                            <div class="DV">
+                                <b>Nome:</b> ${p.credor}<br>
+                                <b>CPF:</b> ${p.cpf||'—'}<br>
+                                <b>Idade:</b> ${p.idade} anos ${p.idade>=60?'<span class="BI">&#9888; IDOSO</span>':''}<br>
+                                <b>Adv.:</b> ${p.advogado}
+                            </div>
+                            <div class="DL" style="margin-top:8px">&#9742; Telefones</div>
+                            <div class="DV" style="line-height:2">
+                                ${(p.celsArr||[]).map(cel=>{
+                                    const d=cel.replace(/\D/g,'');
+                                    return '<a href="https://wa.me/55'+d+'" target="_blank" title="Clique → WA | Botão direito → Copiar número" oncontextmenu="event.preventDefault();navigator.clipboard.writeText(\''+d+'\').then(()=>{this.style.outline=\'2px solid #86efac\';setTimeout(()=>this.style.outline=\'\',800)})" style="display:inline-flex;align-items:center;gap:4px;color:#86efac;font-weight:700;text-decoration:none;margin-right:6px;margin-bottom:2px;padding:1px 5px;border-radius:4px;border:1px solid #14532d" onmouseover="this.style.background=\'#14532d\'" onmouseout="this.style.background=\'\'" >📱 '+cel+'</a>';
+                                }).join('')}
+                                ${(()=>{const fixosList=(p.tels||'').match(/☎ FIXO:[^📱]*/);return fixosList?'<br><span style="color:#64748b;font-size:9.5px">'+fixosList[0]+'</span>':'';})()}
+                            </div>
+                            <div class="DL" style="margin-top:8px">&#128737; Polo Passivo</div>
+                            <div class="DV"><b>Nome:</b> ${p.contra}<br><b>DOC:</b> ${p.contraDoc||'—'}</div>
+                        </div>
+                        <div>
+                            <div class="DL">&#128242; WhatsApp — Etapa 1 pré-colada (confirme antes de enviar)</div>
+                            <div style="display:flex;flex-direction:column;gap:4px">
+                                ${(p.celsArr||[]).map((cel)=>{
+                                    const d=cel.replace(/\D/g,'');
+                                    const txt=encodeURIComponent(p.msg1);
+                                    return '<a href="https://wa.me/55'+d+'?text='+txt+'" target="_blank" class="wa-btn" style="justify-content:space-between">'+
+                                        '<span>📲 '+cel+'</span>'+
+                                        '<span style="font-size:8px;opacity:.7;margin-left:6px">Etapa 1 pronta — confirme antes de enviar</span>'+
+                                    '</a>';
+                                }).join('')}
+                            </div>
+                            <div style="margin-top:8px;padding:6px 8px;background:#1a2535;border-radius:6px;border-left:3px solid #3b82f6">
+                                <div style="font-size:8px;color:#60a5fa;font-weight:900;margin-bottom:3px">ℹ️ O texto da Etapa 1 já estará colado no WhatsApp. Só enviar quando confirmar o número.</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:6px">
+                            <div class="DL">&#128221; Mensagens</div>
+                            <div style="position:relative">
+                                <div class="msg-box" id="mb1-${rid}">Etapa 1&#10;${p.msg1}</div>
+                                <button class="cbtn" onclick="event.stopPropagation();cpMsg('mb1-${rid}',this)">Copiar</button>
+                            </div>
+                            <div style="position:relative">
+                                <div class="msg-box" id="mb2-${rid}">Etapa 2&#10;${p.msg2}</div>
+                                <button class="cbtn" onclick="event.stopPropagation();cpMsg('mb2-${rid}',this)">Copiar</button>
+                            </div>
+                            <div style="position:relative">
+                                <div class="msg-box" id="mb3-${rid}">Etapa 3&#10;${p.msg3}</div>
+                                <button class="cbtn" onclick="event.stopPropagation();cpMsg('mb3-${rid}',this)">Copiar</button>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>`;
+        });
+        body.innerHTML=html||'<tr><td colspan="14" style="text-align:center;padding:60px;color:#1f2937;font-weight:900;text-transform:uppercase;letter-spacing:.2em">Sem processos nos filtros.</td></tr>';
+        initColResize();
+    }
+    // Gera e baixa o PDF de um único processo pelo rid
+    async function gerarPdfAvulso(rid) {
+        if (!pdfRaw) { alert('Selecione o PDF modelo primeiro!'); return; }
+        const p = globalData.find(x => x.n_processo.replace(/\W/g,'') === rid);
+        if (!p) return;
+        const btn = event.currentTarget;
+        const origText = btn.innerHTML;
+        btn.innerHTML = '&#9696; Gerando...';
+        btn.disabled = true;
+        try {
+            const now = new Date();
+            const dataHoje = now.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
+            function slugP(s,m){return s.replace(/[^A-Za-zÀ-ÿ0-9 ]/g,'').replace(/\s+/g,'_').substring(0,m).replace(/_+$/,'').toUpperCase();}
+            const vN = p.valS.replace(/\./g,'').replace(',','_');
+            const nomePdf = `${slugP(p.credor,22)} vs ${slugP(p.contra,18)} -${p.data_inicio?p.data_inicio.split('/').join('-'):'sem-data'}-alvara-R$${vN}.pdf`;
+            const pdfDoc = await PDFLib.PDFDocument.load(pdfRaw);
+            const form = pdfDoc.getForm();
+            const page = pdfDoc.getPages()[0];
+            const advPdf = p.raw_name ? p.raw_name.toUpperCase() : p.advogado;
+            const mapping = {
+                'tribunal': p.tribunal,
+                'orgao_julgador': p.vara,
+                'n_processo': `Processo Nº: ${p.n_processo}`,
+                'credor': `Credor: ${p.credor}`,
+                'cpf_cnpj': `CPF/CNPJ: ${p.cpf}`,
+                'advogado': `Advogado(a): ${advPdf} | OAB: ${lawyerHeaderOAB}`,
+                'parte_contra': `Cumprimento de Sentença Contra: ${p.contra}`,
+                'valor_a_receber': `Valor a Receber: R$ ${p.valS}`,
+                'valor_extenso': p.valorExtenso,
+                'data_atual': dataHoje
+            };
+            for (const [fn, val] of Object.entries(mapping)) {
+                try {
+                    const field = form.getTextField(fn);
+                    const r = field.acroField.getWidgets()[0].getRectangle();
+                    let fs = fn==='orgao_julgador'?9:fn==='tribunal'?10:fn==='valor_extenso'?9:fn==='advogado'?9:fn==='parte_contra'?9:fn==='credor'?10:10;
+                    const len = (val||"").length;
+                    if(fn==='orgao_julgador'||fn==='tribunal'||fn==='parte_contra'){if(len>60)fs=8;if(len>90)fs=6.5;if(len>120)fs=5;}
+                    field.setText(String(val||"")); field.setFontSize(fs);
+                    if (fn==='parte_contra') {
+                        const lineY = r.y + r.height - fs * 1.5;
+                        // Mede a largura real do texto usando a fonte Helvetica embutida
+                        let measuredW = 0;
+                        try {
+                            const hFont = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+                            measuredW = hFont.widthOfTextAtSize(String(val||''), fs);
+                        } catch(e) {
+                            measuredW = val.length * fs * 0.50; // fallback
+                        }
+                        const lineX2 = Math.min(r.x + measuredW + 2, r.x + r.width);
+                        page.drawLine({start:{x:r.x,y:lineY},end:{x:lineX2,y:lineY},thickness:0.7,color:PDFLib.rgb(0,0,0)});
+                    }
+                } catch(e){}
+            }
+            form.flatten();
+            const bytes = await pdfDoc.save();
+            const blob = new Blob([bytes], {type:'application/pdf'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = nomePdf;
+            a.click();
+            URL.revokeObjectURL(a.href);
+            btn.innerHTML = '&#10003; Baixado!';
+            btn.style.background = 'linear-gradient(135deg,#14532d,#16a34a)';
+            setTimeout(()=>{ btn.innerHTML = origText; btn.style.background=''; btn.disabled=false; }, 2500);
+        } catch(e) {
+            btn.innerHTML = '&#10007; Erro — tente novamente';
+            btn.disabled = false;
+            setTimeout(()=>{ btn.innerHTML = origText; }, 2000);
+        }
+    }
+
+    function toggleDetail(id) {
+        const panel=document.getElementById('panel-'+id);
+        const row=document.getElementById('row-'+id);
+        const arrow=document.getElementById('arrow-'+id);
+        if(!panel) return;
+        const isOpen=panel.classList.contains('open');
+        document.querySelectorAll('.DP.open').forEach(p=>p.classList.remove('open'));
+        document.querySelectorAll('.MR.EX').forEach(r=>r.classList.remove('EX'));
+        document.querySelectorAll('td[id^="arrow-"]').forEach(a=>a.textContent='▼');
+        if(!isOpen){ panel.classList.add('open'); row.classList.add('EX'); arrow.textContent='▲'; }
+    }
+
+    // copy from msg-box element
+    function cpMsg(elId, btn) {
+        const text = document.getElementById(elId)?.innerText||'';
+        navigator.clipboard.writeText(text).then(()=>{
+            btn.innerText='✓'; btn.style.background='#16a34a';
+            setTimeout(()=>{btn.innerText='Copiar';btn.style.background='';},1500);
+        });
+    }
+
+    // ── COLUMN RESIZE ──────────────────────────────────────────────────
+    function initColResize() {
+        if (window._colResizeInited) return;
+        window._colResizeInited = true;
+        const table = document.getElementById('main-table');
+        const headers = table.querySelectorAll('thead th');
+        headers.forEach((th) => {
+            // skip if already has handle
+            if (th.querySelector('.col-resize-handle')) return;
+            th.style.position='relative';
+            const handle = document.createElement('div');
+            handle.className='col-resize-handle';
+            handle.style.cssText='position:absolute;right:0;top:0;width:6px;height:100%;cursor:col-resize;z-index:10;background:transparent;';
+            handle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const startX=e.pageX, startW=th.offsetWidth;
+                const onMove=(ev)=>{ th.style.width=(Math.max(40,startW+ev.pageX-startX))+'px'; };
+                const onUp=()=>{ document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp); };
+                document.addEventListener('mousemove',onMove);
+                document.addEventListener('mouseup',onUp);
+            });
+            handle.addEventListener('dblclick',(e)=>{ e.stopPropagation(); th.style.width=''; });
+            th.appendChild(handle);
+        });
+    }
+
+    function copyMsg(event, text) {
+        event.stopPropagation();
+        navigator.clipboard.writeText(text).then(()=>{
+            const btn=event.target; btn.innerText='✓'; btn.style.background='#16a34a';
+            setTimeout(()=>{btn.innerText='Copiar';btn.style.background='';},1500);
+        });
+    }
+
+    function updateRow(n, v) {
+        const p=globalData.find(x=>x.n_processo===n);
+        if(p) p.selecionado=v;
+        const sel=globalData.filter(x=>x.selecionado);
+        document.getElementById('sel-stat').innerText=`SEL: ${sel.length}`;
+        const soma=sel.reduce((s,p)=>s+p.valFloat,0);
+        document.getElementById('count-soma').innerText='R$ '+soma.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+    function toggleAll(v){ globalData.forEach(p=>p.selecionado=v); renderTable(); }
+    function sortTable(k){ if(sortKey===k) sortAsc=!sortAsc; else{sortKey=k;sortAsc=false;} renderTable(); }
+
+    // ── ALERTA PRÉ-GERAÇÃO ──────────────────────────────────────────────
+    function askBeforeGenerate() {
+        if (!pdfRaw) return alert('Selecione o PDF modelo primeiro!');
+        const limit = parseInt(document.getElementById('f-qtd').value)||9999;
+
+        // Respeita exatamente os filtros visíveis na tela
+        const vMin = parseFloat(document.getElementById('f-val-min').value)||0;
+        const iMin = parseInt(document.getElementById('f-age-min').value)||0;
+        const iMax = parseInt(document.getElementById('f-age-max').value)||999;
+        const ladoF = document.getElementById('f-lado').value;
+        const busca = (document.getElementById('search-bar').value||'').toLowerCase().trim();
+        const visiveis = globalData.filter(p =>
+            (p.valFloat>=vMin)&&(p.idade>=iMin)&&(p.idade<=iMax)&&
+            (ladoF==='TODOS'||p.lado===ladoF)&&
+            (!busca||p.credor.toLowerCase().includes(busca)||p.n_processo.toLowerCase().includes(busca)||p.contra.toLowerCase().includes(busca))&&
+            (assuntosFiltro.size===0||assuntosFiltro.has(p.assunto||'Sem assunto'))
+        );
+        const target = visiveis.filter(p=>p.selecionado).slice(0,limit);
+        if (target.length===0) return alert('Nenhum processo selecionado na tela atual.');
+        window._pendingTarget = target;
+
+        const totalSel = globalData.filter(p=>p.selecionado).length;
+        const foiFiltrado = visiveis.length < globalData.length;
+        const foiCortadoPorLote = visiveis.filter(p=>p.selecionado).length > limit;
+        const zeros = target.filter(p=>p.valFloat===0);
+        const idosos = target.filter(p=>p.idade>=60);
+        const jaGerados = target.filter(p=>processoJaGerado(p.n_processo));
+        const somaT = target.reduce((s,p)=>s+p.valFloat,0);
+
+        let motivo = '';
+        if (foiFiltrado && foiCortadoPorLote) motivo = ` (filtro ativo + lote limitado a ${limit})`;
+        else if (foiFiltrado) motivo = ` (${visiveis.length} visíveis com filtro ativo)`;
+        else if (foiCortadoPorLote) motivo = ` (lote limitado a ${limit} de ${totalSel} selecionados)`;
+        else motivo = ' — todos os selecionados serão baixados';
+
+        let body='';
+        body+=`<div class="AI A-blue">📦 <b>${target.length}</b> processo${target.length!==1?'s':''} serão gerados<span style="font-size:9px;opacity:.7;margin-left:4px">${motivo}</span></div>`;
+        body+=`<div class="AI A-green">💰 Soma total: <b>R$ ${somaT.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b></div>`;
+        if(idosos.length>0) body+=`<div class="AI A-orange">⚠️ <b>${idosos.length}</b> processo(s) com PRIORIDADE IDOSO (≥ 60 anos)</div>`;
+        if(jaGerados.length>0) body+=`<div class="AI A-orange">🔁 <b>${jaGerados.length}</b> processo(s) já gerado(s) em lote anterior — serão gerados novamente</div>`;
+        if(zeros.length>0) body+=`<div class="AI A-red">🚫 <b>${zeros.length}</b> com VALOR ZERO — sem PDF para estes</div>`;
+        else body+=`<div class="AI A-green">✅ Nenhum processo com valor zero</div>`;
+
+        document.getElementById('alert-body').innerHTML=body;
+        document.getElementById('alert-modal').classList.add('show');
+        pendingGenerate=true;
+    }
+    function closeAlert(){ document.getElementById('alert-modal').classList.remove('show'); pendingGenerate=false; }
+    function confirmGenerate(){ closeAlert(); generateFullBatch(window._pendingTarget); }
+
+    // ── BLOCO 21 LINHAS ─────────────────────────────────────────────────
+    function montar21Linhas(p, idx, total, dataLog) {
+        const alertaIdoso=p.idade>=60?"⚠️ PRIORIDADE IDOSO: ⏳ ":"🎂 IDADE: ";
+        return (
+`📜======== PROCESSO ${idx} de ${total} ========📜
+
+1:${alertaIdoso}${p.idade} anos
+2:⏳Dias corridos: ${p.tramitText} (Atualizado em ${dataLog})
+
+3:🔗LINK: ${p.link}
+4:${p.gerado?"✅ Alvara gerado com sucesso":"✅ Aguardando geração"}
+5:🚀Alvara: ${p.nomeArquivo||"pendente"}
+
+6:⚖️ Número: ${p.n_processo}
+7:💰 Valor: R$ ${p.valS}
+8:⚠️ ASSUNTO: ${p.assunto}
+9:🏛️ TRIBUNAL: ${p.tribunal}
+10:⚖️ ORGAO JULGADOR: ${p.vara}
+11:  CLASSE: ${p.classe}
+12:📅 DATA INICIO: ${p.data_inicio}
+13:🕒 DATA ULTIMO MOVIMENTO: ${p.dataMov}
+
+14:✅ POLO ATIVO: ✅  🎓 ADVOGADO: ${p.raw_name}
+
+15:👤 NOME: ${p.credor}
+16:🆔 DOC: ${p.cpf}  -  RENDA: R$ ${p.valS}
+17:🎂 IDADE: ${p.idade} anos
+18:☎️TELEFONES: ${p.tels}
+
+19:🛡️POLO PASSIVO:🛡️  NOME: ${p.contra}
+20:🆔DOC: ${p.contraDoc}
+
+21:📲 VERSÃO WHATSAPP:
+──────────────────────────────────────────────────
+
+▶ Etapa 1 - Comunicação do êxito
+──────────────────────────────────────────────────
+${p.msg1}
+
+▶ Etapa 2 - Solicitação dos dados bancários
+──────────────────────────────────────────────────
+${p.msg2}
+
+▶ Etapa 3 - Confirmação e próximos passos
+──────────────────────────────────────────────────
+${p.msg3}
+
+============================================================
+
+`);
+    }
+
+    // ── GERAÇÃO ZIP ─────────────────────────────────────────────────────
+    // ── VERIFICA HISTÓRICO ─────────────────────────────────────────────
+    // Retorna o lote mais recente que contém esse processo, ou null
+    function processoJaGerado(nProc) {
+        const hist = carregarHistorico();
+        for (const h of hist) {
+            if ((h.processos||[]).includes(nProc)) return h;
+        }
+        return null;
+    }
+
+    // ── ASSUNTOS ────────────────────────────────────────────────────────
+    function buildAssuntos() {
+        assuntosDisponiveis = {};
+        globalData.forEach(p => {
+            const a = p.assunto || 'Sem assunto';
+            assuntosDisponiveis[a] = (assuntosDisponiveis[a]||0) + 1;
+        });
+        assuntosFiltro = new Set(); // resetar filtro
+        renderAssuntoList();
+        document.getElementById('assunto-badge').style.display='none';
+    }
+
+    function renderAssuntoList() {
+        const list = document.getElementById('assunto-list');
+        const sorted = Object.entries(assuntosDisponiveis).sort((a,b)=>b[1]-a[1]);
+        list.innerHTML = sorted.map(([nome, cnt]) => {
+            const sel = assuntosFiltro.size===0 || assuntosFiltro.has(nome);
+            return `<div class="assunto-item" onclick="toggleAssunto('${nome.replace(/'/g,"\\'")}')">
+                <label>
+                    <input type="checkbox" ${sel?'checked':''} style="accent-color:#3b82f6;width:12px;height:12px" onclick="event.stopPropagation();toggleAssunto('${nome.replace(/'/g,"\\'")}')">
+                    <span style="${sel?'color:#e2e8f0':'color:#4b5563'}">${nome}</span>
+                </label>
+                <span class="assunto-count">${cnt}</span>
+            </div>`;
+        }).join('');
+    }
+
+    function toggleAssunto(nome) {
+        if (assuntosFiltro.size === 0) {
+            // estava "todos" — agora desmarca este
+            Object.keys(assuntosDisponiveis).forEach(a => { if(a!==nome) assuntosFiltro.add(a); });
+        } else if (assuntosFiltro.has(nome)) {
+            assuntosFiltro.delete(nome);
+            if (assuntosFiltro.size === 0) assuntosFiltro = new Set(); // volta a "todos"
+        } else {
+            assuntosFiltro.add(nome);
+            // se todos selecionados → volta a Set() vazio (todos)
+            if (assuntosFiltro.size === Object.keys(assuntosDisponiveis).length) assuntosFiltro = new Set();
+        }
+        const badge = document.getElementById('assunto-badge');
+        if (assuntosFiltro.size > 0) { badge.style.display='inline'; badge.textContent=assuntosFiltro.size; }
+        else badge.style.display='none';
+        renderAssuntoList();
+        renderTable();
+    }
+
+    function selecionarTodosAssuntos(todos) {
+        assuntosFiltro = todos ? new Set() : new Set(['__none__']);
+        if (!todos) {
+            // nenhum = só um assunto inválido → tabela vazia
+            assuntosFiltro = new Set(['__nenhum__']);
+        }
+        const badge = document.getElementById('assunto-badge');
+        badge.style.display = todos ? 'none' : 'inline';
+        if (!todos) badge.textContent = Object.keys(assuntosDisponiveis).length;
+        renderAssuntoList();
+        renderTable();
+    }
+
+    function toggleAssuntoPanel() {
+        const p = document.getElementById('assunto-panel');
+        const h = document.getElementById('historico-panel');
+        h.style.display='none';
+        p.style.display = p.style.display==='none'?'block':'none';
+    }
+
+    // ── HISTÓRICO ────────────────────────────────────────────────────────
+    const HIST_KEY = 'robozao_historico_v1';
+
+    function salvarHistorico(n, nomeTxt, totalPdfs, soma, processos) {
+        let hist = [];
+        try { hist = JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); } catch(e){}
+        const entry = {
+            id: Date.now(),
+            data: new Date().toLocaleString('pt-BR'),
+            nomeTxt, totalPdfs, soma,
+            processos: processos.map(p=>p.n_processo)
+        };
+        hist.unshift(entry);
+        if (hist.length > 50) hist = hist.slice(0,50);
+        localStorage.setItem(HIST_KEY, JSON.stringify(hist));
+    }
+
+    function carregarHistorico() {
+        try { return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); } catch(e){ return []; }
+    }
+
+    function limparHistorico() {
+        if (confirm('Apagar todo o histórico de lotes?')) {
+            localStorage.removeItem(HIST_KEY);
+            renderHistoricoList();
+        }
+    }
+
+    function renderHistoricoList() {
+        const hist = carregarHistorico();
+        const el = document.getElementById('historico-list');
+        if (hist.length===0) {
+            el.innerHTML='<p style="font-size:10px;color:#4b5563;text-align:center;padding:16px">Nenhum lote gerado ainda.</p>';
+            return;
+        }
+        // Pega processos do lote atual para checar duplicatas
+        const procAtual = new Set(globalData.map(p=>p.n_processo));
+        el.innerHTML = hist.map(h => {
+            const dupsNoAtual = (h.processos||[]).filter(n=>procAtual.has(n));
+            const avisoHTML = dupsNoAtual.length>0
+                ? `<span class="hist-aviso">⚠ ${dupsNoAtual.length} processo${dupsNoAtual.length>1?'s':''} já gerado${dupsNoAtual.length>1?'s':''} neste TXT</span>`
+                : '';
+            const somaFmt = 'R$ '+(h.soma||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+            return `<div class="hist-item">
+                <div class="hist-title">${h.nomeTxt||'—'} ${avisoHTML}</div>
+                <div class="hist-meta">
+                    📅 ${h.data}<br>
+                    📦 ${h.totalPdfs} PDF${h.totalPdfs!==1?'s':''} gerados &nbsp;·&nbsp; 💰 ${somaFmt}<br>
+                    🔢 ${(h.processos||[]).length} processo${(h.processos||[]).length!==1?'s':''}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function toggleHistorico() {
+        const p = document.getElementById('historico-panel');
+        const a = document.getElementById('assunto-panel');
+        a.style.display='none';
+        const vis = p.style.display==='none'||p.style.display==='';
+        p.style.display = vis ? 'block':'none';
+        if (vis) renderHistoricoList();
+    }
+
+    // Fecha painéis ao clicar fora
+    document.addEventListener('click', (e) => {
+        const ap = document.getElementById('assunto-panel');
+        const hp = document.getElementById('historico-panel');
+        const btnA = document.getElementById('btn-assunto');
+        if (ap && !ap.contains(e.target) && !btnA?.contains(e.target)) ap.style.display='none';
+        if (hp && !hp.contains(e.target) && e.target.textContent!=='🕓 Histórico') hp.style.display='none';
+    });
+
+    async function generateFullBatch(target) {
+        if (!target || target.length===0) return;
+        document.getElementById('loader').style.display='flex';
+        const zip=new JSZip();
+        const now=new Date();
+        const dataLog=now.toLocaleDateString('pt-BR')+" "+now.toLocaleTimeString('pt-BR');
+        const dataHoje=now.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
+        const n=target.length;
+        const rankingLote=calcularRankingDeLista(target);
+        const rankingTxt=rankingLote.length===0?"  Nenhum advogado identificado.\n":rankingLote.map(([nome,qtd],i)=>`  ${(i+1).toString().padStart(2)}. ${nome}  (${qtd} processo${qtd>1?'s':''})${i===0?' ← PRINCIPAL':''}`).join('\n');
+        function slug(s,m){return s.replace(/[^A-Za-zÀ-ÿ0-9 ]/g,'').replace(/\s+/g,'_').substring(0,m).replace(/_+$/,'').toUpperCase();}
+        const oabTxt=(target[0]?.oabNum||lawyerHeaderOAB).replace(/\s/g,'');
+        const advSlug=slug(lawyerMasterName,30);
+        const nomeLoteTxt=`${n}_MENSAGENS_DO_LOTE_${oabTxt}_${advSlug}.txt`;
+        const nomeMasterTxt=`MASTER_ATUALIZADO_${oabTxt}_${advSlug}.txt`;
+        let relLote=`==================== RELATÓRIO DE MENSAGENS ====================\n\n    Advogado: ${lawyerMasterName}\n 🎓 ADVOGADO: ${lawyerMasterName}\n OAB: ${oabTxt}\n\n🚀 Total do Lote: ${n}\n\n Gerado em: ${dataLog}\n\n${'='.repeat(60)}\n🏆 RANKING ADVOGADOS — POLO ATIVO (lote)\n${'─'.repeat(40)}\n${rankingTxt}\n${'='.repeat(60)}\n\n`;
+        const loteIds=new Set(target.map(p=>p.n_processo));
+        const restantes=globalData.filter(p=>!loteIds.has(p.n_processo));
+        const paAtivo=restantes.filter(p=>p.lado==="ATIVO").length;
+        const paPassivo=restantes.filter(p=>p.lado==="PASSIVO").length;
+        const somaRest=restantes.reduce((s,p)=>s+p.valFloat,0);
+        const somaFmt=`R$ ${somaRest.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+        const rankRest=calcularRankingDeLista(restantes);
+        const rankRestTxt=rankRest.length===0?"  Nenhum advogado identificado.\n":rankRest.map(([nome,qtd],i)=>`  ${(i+1).toString().padStart(2)}. ${nome}  (${qtd} processo${qtd>1?'s':''})${i===0?' ← PRINCIPAL':''}`).join('\n');
+        let master=`==================== RELATÓRIO DE MENSAGENS ====================\n\n    Advogado: ${lawyerMasterName}\n 🎓 ADVOGADO: ${lawyerMasterName}\n OAB: ${oabTxt}\n\n🚀 Total de Processos INICIAL: ${initialTotalGlobal||globalData.length}\n\n Gerado em: ${dataLog}\n\n`;
+        originalHistory.forEach(h=>{master+=h+'\n';});
+        master+=`⚠PROCESSOS  RETIRADO DESSE ARQUIVO: ( ${n} ) DIA :${dataLog}\n\n\n⚠NOVO TOTAL : ${restantes.length}  PROCESSOS AINDA NA LISTA !\n  Polo Ativo: ${paAtivo} | Polo Passivo: ${paPassivo}\n  Soma: ${somaFmt}\n\n${'='.repeat(60)}\n🏆 RANKING ADVOGADOS — POLO ATIVO\n${'─'.repeat(40)}\n${rankRestTxt}\n${'='.repeat(60)}\n\n`;
+        restantes.forEach((p,i)=>{master+=montar21Linhas(p,i+1,restantes.length,dataLog);});
+
+        for (const [idx,p] of target.entries()) {
+            const pct=Math.round(((idx+1)/n)*100);
+            document.getElementById('loader-status').innerText=`${p.credor.substring(0,28)}`;
+            document.getElementById('progress-fill').style.width=pct+'%';
+            document.getElementById('progress-label').innerText=`${idx+1} / ${n}`;
+            if (p.valFloat>0) {
+                const vN=p.valS.replace(/\./g,'').replace(',','_');
+                const credorSlug=slug(p.credor,22);
+                const contraSlug=slug(p.contra,18);
+                const dtSlug=p.data_inicio?p.data_inicio.split('/').join('-'):'sem-data';
+                const nomePdf=`${credorSlug} vs ${contraSlug} -${dtSlug}-alvara-R$${vN}.pdf`;
+                try {
+                    const pdfDoc=await PDFLib.PDFDocument.load(pdfRaw);
+                    const form=pdfDoc.getForm();
+                    const page=pdfDoc.getPages()[0];
+                    const advPdf=p.raw_name?p.raw_name.toUpperCase():p.advogado; const mapping={'tribunal':p.tribunal,'orgao_julgador':p.vara,'n_processo':`Processo Nº: ${p.n_processo}`,'credor':`Credor: ${p.credor}`,'cpf_cnpj':`CPF/CNPJ: ${p.cpf}`,'advogado':`Advogado(a): ${advPdf} | OAB: ${lawyerHeaderOAB}`,'parte_contra':`Cumprimento de Sentença Contra: ${p.contra}`,'valor_a_receber':`Valor a Receber: R$ ${p.valS}`,'valor_extenso':p.valorExtenso,'data_atual':dataHoje};
+                    for (const [fn,val] of Object.entries(mapping)) {
+                        try {
+                            const field=form.getTextField(fn);
+                            const r=field.acroField.getWidgets()[0].getRectangle();
+                            let fs=fn==='orgao_julgador'?9:fn==='tribunal'?10:fn==='valor_extenso'?9:fn==='advogado'?9:fn==='parte_contra'?9:fn==='credor'?10:10;
+                            const len=(val||"").length;
+                            if(fn==='orgao_julgador'||fn==='tribunal'||fn==='parte_contra'){if(len>60)fs=8;if(len>90)fs=6.5;if(len>120)fs=5;}
+                            field.setText(String(val||""));field.setFontSize(fs);
+                            if(fn==='parte_contra'){
+                                const lineY = r.y + r.height - fs * 1.5;
+                                let mW = 0;
+                                try { const hF = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica); mW = hF.widthOfTextAtSize(String(val||''), fs); } catch(e) { mW = val.length * fs * 0.50; }
+                                const lineX2 = Math.min(r.x + mW + 2, r.x + r.width);
+                                page.drawLine({start:{x:r.x, y:lineY}, end:{x:lineX2, y:lineY}, thickness:0.7, color:PDFLib.rgb(0,0,0)});
+                            }
+                        } catch(e){}
+                    }
+                    form.flatten();
+                    zip.file(nomePdf,await pdfDoc.save());
+                    p.gerado=true; p.nomeArquivo=nomePdf;
+                } catch(e){ p.gerado=false; p.nomeArquivo="ERRO_PDF"; }
+            } else { p.gerado=false; p.nomeArquivo="N/A (Valor Zero)"; }
+            relLote+=montar21Linhas(p,idx+1,n,dataLog);
+        }
+        zip.file(nomeLoteTxt,relLote);
+        zip.file(nomeMasterTxt,master);
+        const totalPdfs = target.filter(p=>p.gerado).length;
+        const txtFileName = document.getElementById('txt-file').files[0]?.name.replace(/\.txt$/i,'').replace(/[^A-Za-z0-9_\-]/g,'_').substring(0,40) || advSlug;
+        const nomeZip = `LOTE_${txtFileName}_${totalPdfs}PDFs.zip`;
+        const zipBlob = await zip.generateAsync({type:"blob"});
+        saveAs(zipBlob, nomeZip); // ✅ Baixa local (sempre)
+        // ✅ Envia pro chat do Telegram SE estiver no app
+        if (tgApp && tgApp.sendData) {
+            tgApp.MainButton.show();
+            tgApp.MainButton.onClick(() => enviarZipTelegram(zipBlob, nomeZip));
+            // Mostra notificação nativa do Telegram
+            tgApp.showPopup({
+                title: "✅ ZIP Gerado!",
+                message: `${totalPdfs} PDFs prontos.\nClique em "Enviar ZIP pro Chat" para mandar pro Telegram, ou o download já foi feito.`,
+                buttons: [
+                    {id:"enviar", type:"default", text:"📤 Enviar pro Chat"},
+                    {id:"ok",     type:"cancel",  text:"✅ Só o download"}
+                ]
+            }, (btnId) => {
+                if (btnId === "enviar") enviarZipTelegram(zipBlob, nomeZip);
+                tgApp.MainButton.hide();
+            });
+        }
+        // Salvar no histórico
+        const somaLote = target.reduce((s,p)=>s+p.valFloat,0);
+        salvarHistorico(n, txtFileName, totalPdfs, somaLote, target);
+        document.getElementById('loader').style.display='none';
+        document.getElementById('progress-fill').style.width='0%';
+        logEl(`Lote de ${n} gerado — ${totalPdfs} PDFs + 2 TXTs → ${nomeZip}`);
+        renderTable();
+    }
+
+</script>
+</body>
+</html>
