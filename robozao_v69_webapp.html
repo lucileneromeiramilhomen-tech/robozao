@@ -178,39 +178,39 @@
     const BOT_TOKEN   = _urlParams.get("token") || "";   // ex: ?token=123:ABC
     const CHAT_ID_URL = _urlParams.get("chat") || "";     // ex: ?chat=6975350518
 
-    // Usa chat_id da URL (enviado pelo bot) ou do initDataUnsafe
-    const CHAT_ID = CHAT_ID_URL || tgChatId || "";
+    // ── URL do servidor local do bot (Flask) ─────────────────────
+    // O bot passa a URL via parâmetro ?server=URL
+    const SERVER_URL = _urlParams.get("server") || "";
+    const CHAT_ID    = CHAT_ID_URL || tgChatId || "";
 
-    // ── Envia ZIP pro chat via Bot API (funciona em qualquer modo) ─
+    // ── Envia ZIP pro chat via servidor Flask do bot ──────────────
     async function enviarZipTelegram(zipBlob, nomeZip) {
-        // Não tem token ou chat_id: só baixa local
-        if (!BOT_TOKEN || !CHAT_ID) {
-            logEl("⚠ Token/chat não configurado — só download local.");
+        if (!SERVER_URL || !CHAT_ID) {
+            logEl("⚠ Servidor não configurado — só download local.");
+            console.warn("SERVER_URL:", SERVER_URL, "CHAT_ID:", CHAT_ID);
             return;
         }
         try {
             logEl("📤 Enviando ZIP pro chat do Telegram...");
             const form = new FormData();
-            form.append("chat_id", CHAT_ID);
-            form.append("document", new File([zipBlob], nomeZip, {type:"application/zip"}));
-            form.append("caption",
-                `✅ ZIP gerado pelo Robozão v69\n📦 ${nomeZip}\n📏 ${(zipBlob.size/1024).toFixed(1)} KB`);
+            form.append("chat_id",  CHAT_ID);
+            form.append("nome_zip", nomeZip);
+            form.append("zip_file", new File([zipBlob], nomeZip, {type:"application/zip"}));
 
-            const resp = await fetch(
-                `https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`,
-                { method: "POST", body: form }
-            );
+            const resp = await fetch(`${SERVER_URL}/upload_zip`, {
+                method: "POST",
+                body: form
+            });
             const data = await resp.json();
             if (data.ok) {
                 logEl(`✅ ZIP enviado pro chat! ${nomeZip}`);
-                // Notificação nativa do Telegram
                 if (tgApp) tgApp.showAlert("✅ ZIP enviado pro chat do Telegram!");
             } else {
-                logEl(`❌ Erro Telegram: ${data.description}`);
-                console.error("Telegram API erro:", data);
+                logEl(`❌ Erro: ${data.erro}`);
+                console.error("Servidor erro:", data);
             }
         } catch(e) {
-            logEl(`❌ Falha ao enviar: ${e.message}`);
+            logEl(`❌ Falha ao conectar no servidor: ${e.message}`);
             console.error("enviarZipTelegram erro:", e);
         }
     }
@@ -236,9 +236,27 @@
             badge.textContent = '🔵 ' + nome;
             document.body.appendChild(badge);
         }
-        // Avisa se token não configurado
         if (!BOT_TOKEN) {
             console.warn("⚠ BOT_TOKEN não encontrado na URL. ZIP não será enviado pro chat.");
+        }
+
+        // ── Busca status do bot e exibe na barra de log ──────────
+        if (SERVER_URL && CHAT_ID) {
+            const _syncBotStatus = async () => {
+                try {
+                    const r = await fetch(`${SERVER_URL}/status?chat_id=${CHAT_ID}`);
+                    const d = await r.json();
+                    if (d.ok) {
+                        const el = document.getElementById('log-display');
+                        if (el) {
+                            el.textContent = `> BOT: ${d.total} processos | Filtrados: ${d.filtrados} | Principal: ${(d.adv_principal||'').substring(0,20)} (${d.adv_qtd}x)`;
+                        }
+                    }
+                } catch(e) { /* servidor offline, ignora */ }
+            };
+            // Busca ao carregar e depois a cada 30s
+            setTimeout(_syncBotStatus, 2000);
+            setInterval(_syncBotStatus, 30000);
         }
     });
 </script>
@@ -391,17 +409,46 @@
     const logEl = (msg) => { document.getElementById('log-display').innerText = `> ${msg.toUpperCase()}`; };
 
     // ── IndexedDB PDF ───────────────────────────────────────────────────
+    // URL do PDF modelo no GitHub (raw) — coloque o PDF no repositório
+    const PDF_MODELO_GITHUB = "https://raw.githubusercontent.com/lucileneromeiramilhomen-tech/robozao/main/Formulario-alvara-padrao-sublinhado.pdf";
+
     const dbReq = indexedDB.open("RobozaoDB", 1);
     dbReq.onupgradeneeded = (e) => { e.target.result.createObjectStore("pdfStore"); };
     dbReq.onsuccess = (e) => {
-        e.target.result.transaction("pdfStore","readonly").objectStore("pdfStore").get("modelPdf").onsuccess = (ev) => {
-            if (ev.target.result) { pdfRaw = ev.target.result; logEl("PDF modelo em memória."); }
+        e.target.result.transaction("pdfStore","readonly").objectStore("pdfStore").get("modelPdf").onsuccess = async (ev) => {
+            if (ev.target.result) {
+                pdfRaw = ev.target.result;
+                logEl("✅ PDF modelo carregado (cache local).");
+            } else {
+                // Não tem no cache — tenta baixar do GitHub automaticamente
+                logEl("🌐 Baixando PDF modelo do GitHub...");
+                try {
+                    const resp = await fetch(PDF_MODELO_GITHUB);
+                    if (resp.ok) {
+                        pdfRaw = await resp.arrayBuffer();
+                        // Salva no IndexedDB para próximas vezes
+                        const db = dbReq.result;
+                        db.transaction("pdfStore","readwrite").objectStore("pdfStore").put(pdfRaw,"modelPdf");
+                        logEl("✅ PDF modelo baixado do GitHub e salvo.");
+                    } else {
+                        logEl("⚠ PDF não encontrado no GitHub. Selecione manualmente.");
+                    }
+                } catch(err) {
+                    logEl("⚠ Sem acesso ao GitHub. Selecione o PDF manualmente.");
+                    console.warn("PDF GitHub fetch:", err);
+                }
+            }
         };
     };
     document.getElementById('pdf-file').addEventListener('change', async (e) => {
         pdfRaw = await e.target.files[0].arrayBuffer();
-        dbReq.result.transaction("pdfStore","readwrite").objectStore("pdfStore").put(pdfRaw,"modelPdf");
-        logEl("Novo PDF salvo permanentemente.");
+        // Salva no IndexedDB E no GitHub (substituindo o cache)
+        try {
+            dbReq.result.transaction("pdfStore","readwrite").objectStore("pdfStore").put(pdfRaw,"modelPdf");
+            logEl("✅ Novo PDF salvo permanentemente no cache.");
+        } catch(err) {
+            logEl("PDF carregado (sem cache).");
+        }
     });
 
     // ── EXTENSO ─────────────────────────────────────────────────────────
@@ -1204,11 +1251,29 @@ ${p.msg3}
         const zipBlob = await zip.generateAsync({type:"blob"});
         saveAs(zipBlob, nomeZip); // ✅ Sempre baixa local
 
-        // ✅ Envia pro chat do Telegram se token disponível
-        if (BOT_TOKEN && CHAT_ID) {
-            await enviarZipTelegram(zipBlob, nomeZip);
+        // ✅ Envia pro chat via servidor Flask local
+        if (SERVER_URL && CHAT_ID) {
+            const resumo = `${totalPdfs} PDFs • R$ ${document.getElementById('soma-sel')?.textContent || '?'}`;
+            const form = new FormData();
+            form.append("chat_id",  CHAT_ID);
+            form.append("nome_zip", nomeZip);
+            form.append("resumo",   resumo);
+            form.append("zip_file", new File([zipBlob], nomeZip, {type:"application/zip"}));
+            logEl("📤 Enviando ZIP + PDFs pro chat do Telegram...");
+            try {
+                const resp = await fetch(`${SERVER_URL}/upload_zip`, { method:"POST", body:form });
+                const data = await resp.json();
+                if (data.ok) {
+                    logEl(`✅ ZIP + ${data.pdfs} PDFs enviados pro Telegram!`);
+                    if (tgApp) tgApp.showAlert(`✅ ZIP e ${data.pdfs} PDFs enviados pro chat!`);
+                } else {
+                    logEl(`❌ Erro servidor: ${data.erro}`);
+                }
+            } catch(e) {
+                logEl(`⚠ Servidor offline — só download local. (${e.message})`);
+            }
         } else {
-            logEl(`ZIP gerado — ${totalPdfs} PDFs. Configure token para enviar ao chat.`);
+            logEl(`✅ ZIP gerado — ${totalPdfs} PDFs. (Servidor não configurado)`);
         }
         // Salvar no histórico
         const somaLote = target.reduce((s,p)=>s+p.valFloat,0);
