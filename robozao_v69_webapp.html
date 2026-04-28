@@ -158,57 +158,87 @@
 
 <!-- ✅ TELEGRAM WEBAPP INIT -->
 <script>
-    // Inicializa o Telegram WebApp
+    // ── Telegram WebApp SDK ──────────────────────────────────────
     const tgApp = window.Telegram?.WebApp;
+    const _tgOk = !!(tgApp && tgApp.initDataUnsafe?.user);
+
     if (tgApp) {
         tgApp.ready();
-        tgApp.expand(); // abre em tela cheia
-        // Botão principal do Telegram (rodapé nativo)
-        tgApp.MainButton.setText("📤 Enviar ZIP pro Chat");
-        tgApp.MainButton.color = "#059669";
-        tgApp.MainButton.textColor = "#ffffff";
-        // Tema: adapta cores do app ao tema do Telegram
+        tgApp.expand();
         const tc = tgApp.themeParams;
         if (tc?.bg_color) document.documentElement.style.setProperty('--tg-bg', tc.bg_color);
     }
 
-    // Dados do usuário Telegram (quem abriu o app)
-    const tgUser = tgApp?.initDataUnsafe?.user || null;
+    const tgUser    = tgApp?.initDataUnsafe?.user || null;
+    const tgChatId  = tgUser?.id || null;
 
-    // Função para enviar ZIP de volta pro chat do Telegram
+    // ── Token do bot (lido da URL ?token=XXX ou hardcoded) ──────
+    // O bot injeta o token na URL ao abrir o Mini App
+    const _urlParams  = new URLSearchParams(window.location.search);
+    const BOT_TOKEN   = _urlParams.get("token") || "";   // ex: ?token=123:ABC
+    const CHAT_ID_URL = _urlParams.get("chat") || "";     // ex: ?chat=6975350518
+
+    // Usa chat_id da URL (enviado pelo bot) ou do initDataUnsafe
+    const CHAT_ID = CHAT_ID_URL || tgChatId || "";
+
+    // ── Envia ZIP pro chat via Bot API (funciona em qualquer modo) ─
     async function enviarZipTelegram(zipBlob, nomeZip) {
-        if (!tgApp) return; // não está no Telegram, só baixa normal
+        // Não tem token ou chat_id: só baixa local
+        if (!BOT_TOKEN || !CHAT_ID) {
+            logEl("⚠ Token/chat não configurado — só download local.");
+            return;
+        }
         try {
-            // Converte blob para base64
-            const reader = new FileReader();
-            reader.readAsDataURL(zipBlob);
-            reader.onloadend = () => {
-                const base64 = reader.result.split(',')[1];
-                // Envia dados pro bot via sendData (bot recebe no handler)
-                tgApp.sendData(JSON.stringify({
-                    tipo: "zip_gerado",
-                    nomeZip: nomeZip,
-                    tamanho: zipBlob.size,
-                    base64: base64,
-                    usuario: tgUser?.first_name || "Usuário",
-                    timestamp: new Date().toISOString()
-                }));
-                logEl(`✅ ZIP enviado pro Telegram: ${nomeZip}`);
-            };
+            logEl("📤 Enviando ZIP pro chat do Telegram...");
+            const form = new FormData();
+            form.append("chat_id", CHAT_ID);
+            form.append("document", new File([zipBlob], nomeZip, {type:"application/zip"}));
+            form.append("caption",
+                `✅ ZIP gerado pelo Robozão v69\n📦 ${nomeZip}\n📏 ${(zipBlob.size/1024).toFixed(1)} KB`);
+
+            const resp = await fetch(
+                `https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`,
+                { method: "POST", body: form }
+            );
+            const data = await resp.json();
+            if (data.ok) {
+                logEl(`✅ ZIP enviado pro chat! ${nomeZip}`);
+                // Notificação nativa do Telegram
+                if (tgApp) tgApp.showAlert("✅ ZIP enviado pro chat do Telegram!");
+            } else {
+                logEl(`❌ Erro Telegram: ${data.description}`);
+                console.error("Telegram API erro:", data);
+            }
         } catch(e) {
-            console.error("Erro ao enviar pro Telegram:", e);
-            // Fallback: só baixa local
+            logEl(`❌ Falha ao enviar: ${e.message}`);
+            console.error("enviarZipTelegram erro:", e);
         }
     }
 
-    // Mostra badge do usuário Telegram na toolbar se disponível
+    // ── Envia notificação de texto simples pro chat ──────────────
+    async function notificarBot(texto) {
+        if (!BOT_TOKEN || !CHAT_ID) return;
+        try {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: "POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({chat_id: CHAT_ID, text: texto, parse_mode: "Markdown"})
+            });
+        } catch(e) { console.error("notificarBot:", e); }
+    }
+
+    // ── Badge do usuário na toolbar ──────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
         if (tgUser) {
             const nome = tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '');
             const badge = document.createElement('div');
-            badge.style.cssText = 'position:fixed;top:4px;right:8px;background:#1d4ed8;color:white;font-size:8px;font-weight:900;padding:2px 8px;border-radius:99px;z-index:9999;opacity:.9';
+            badge.style.cssText = 'position:fixed;top:4px;right:8px;background:#1d4ed8;color:white;font-size:8px;font-weight:900;padding:2px 8px;border-radius:99px;z-index:9999;opacity:.9;pointer-events:none';
             badge.textContent = '🔵 ' + nome;
             document.body.appendChild(badge);
+        }
+        // Avisa se token não configurado
+        if (!BOT_TOKEN) {
+            console.warn("⚠ BOT_TOKEN não encontrado na URL. ZIP não será enviado pro chat.");
         }
     });
 </script>
@@ -1172,23 +1202,13 @@ ${p.msg3}
         const txtFileName = document.getElementById('txt-file').files[0]?.name.replace(/\.txt$/i,'').replace(/[^A-Za-z0-9_\-]/g,'_').substring(0,40) || advSlug;
         const nomeZip = `LOTE_${txtFileName}_${totalPdfs}PDFs.zip`;
         const zipBlob = await zip.generateAsync({type:"blob"});
-        saveAs(zipBlob, nomeZip); // ✅ Baixa local (sempre)
-        // ✅ Envia pro chat do Telegram SE estiver no app
-        if (tgApp && tgApp.sendData) {
-            tgApp.MainButton.show();
-            tgApp.MainButton.onClick(() => enviarZipTelegram(zipBlob, nomeZip));
-            // Mostra notificação nativa do Telegram
-            tgApp.showPopup({
-                title: "✅ ZIP Gerado!",
-                message: `${totalPdfs} PDFs prontos.\nClique em "Enviar ZIP pro Chat" para mandar pro Telegram, ou o download já foi feito.`,
-                buttons: [
-                    {id:"enviar", type:"default", text:"📤 Enviar pro Chat"},
-                    {id:"ok",     type:"cancel",  text:"✅ Só o download"}
-                ]
-            }, (btnId) => {
-                if (btnId === "enviar") enviarZipTelegram(zipBlob, nomeZip);
-                tgApp.MainButton.hide();
-            });
+        saveAs(zipBlob, nomeZip); // ✅ Sempre baixa local
+
+        // ✅ Envia pro chat do Telegram se token disponível
+        if (BOT_TOKEN && CHAT_ID) {
+            await enviarZipTelegram(zipBlob, nomeZip);
+        } else {
+            logEl(`ZIP gerado — ${totalPdfs} PDFs. Configure token para enviar ao chat.`);
         }
         // Salvar no histórico
         const somaLote = target.reduce((s,p)=>s+p.valFloat,0);
